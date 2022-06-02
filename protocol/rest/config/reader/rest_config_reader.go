@@ -33,8 +33,9 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
 	"dubbo.apache.org/dubbo-go/v3/common/extension"
 	"dubbo.apache.org/dubbo-go/v3/common/logger"
+	"dubbo.apache.org/dubbo-go/v3/config"
 	"dubbo.apache.org/dubbo-go/v3/config/interfaces"
-	"dubbo.apache.org/dubbo-go/v3/protocol/rest/config"
+	common "dubbo.apache.org/dubbo-go/v3/protocol/rest/config"
 )
 
 const REST = "rest"
@@ -60,8 +61,9 @@ func (cr *RestConfigReader) ReadConsumerConfig(reader *bytes.Buffer) error {
 
 	restConsumerServiceConfigMap := make(map[string]*config.RestServiceConfig, len(restConsumerConfig.RestServiceConfigsMap))
 	for key, rc := range restConsumerConfig.RestServiceConfigsMap {
-		rc.Client = getNotEmptyStr(rc.Client, restConsumerConfig.Client, constant.DefaultRestClient)
-		rc.RestMethodConfigsMap = initMethodConfigMap(rc, restConsumerConfig.Consumes, restConsumerConfig.Produces)
+		rc.Client = common.GetNotEmptyStr(rc.Client, restConsumerConfig.Client, constant.DefaultRestClient)
+		//初始化每个方法的配置
+		rc.RestMethodConfigs = initMethodConfigMap(rc, restConsumerConfig.Consumes, restConsumerConfig.Produces)
 		restConsumerServiceConfigMap[key] = rc
 	}
 	config.SetRestConsumerServiceConfigMap(restConsumerServiceConfigMap)
@@ -77,8 +79,8 @@ func (cr *RestConfigReader) ReadProviderConfig(reader *bytes.Buffer) error {
 	}
 	restProviderServiceConfigMap := make(map[string]*config.RestServiceConfig, len(restProviderConfig.RestServiceConfigsMap))
 	for key, rc := range restProviderConfig.RestServiceConfigsMap {
-		rc.Server = getNotEmptyStr(rc.Server, restProviderConfig.Server, constant.DefaultRestServer)
-		rc.RestMethodConfigsMap = initMethodConfigMap(rc, restProviderConfig.Consumes, restProviderConfig.Produces)
+		rc.Server = common.GetNotEmptyStr(rc.Server, restProviderConfig.Server, constant.DefaultRestServer)
+		rc.RestMethodConfigs = initMethodConfigMap(rc, restProviderConfig.Consumes, restProviderConfig.Produces)
 		restProviderServiceConfigMap[key] = rc
 	}
 	config.SetRestProviderServiceConfigMap(restProviderServiceConfigMap)
@@ -91,25 +93,13 @@ func initMethodConfigMap(rc *config.RestServiceConfig, consumes string, produces
 	for _, mc := range rc.RestMethodConfigs {
 		mc.InterfaceName = rc.InterfaceName
 		mc.Path = rc.Path + mc.Path
-		mc.Consumes = getNotEmptyStr(mc.Consumes, rc.Consumes, consumes)
-		mc.Produces = getNotEmptyStr(mc.Produces, rc.Produces, produces)
-		mc.MethodType = getNotEmptyStr(mc.MethodType, rc.MethodType)
+		mc.Consumes = common.GetNotEmptyStr(mc.Consumes, rc.Consumes, consumes)
+		mc.Produces = common.GetNotEmptyStr(mc.Produces, rc.Produces, produces)
+		mc.MethodType = common.GetNotEmptyStr(mc.MethodType, rc.MethodType)
 		mc = transformMethodConfig(mc)
 		mcm[mc.MethodName] = mc
 	}
 	return mcm
-}
-
-// function will return first not empty string ..
-func getNotEmptyStr(args ...string) string {
-	var r string
-	for _, t := range args {
-		if len(t) > 0 {
-			r = t
-			break
-		}
-	}
-	return r
 }
 
 // transformMethodConfig
@@ -122,8 +112,16 @@ func transformMethodConfig(methodConfig *config.RestMethodConfig) *config.RestMe
 			methodConfig.PathParamsMap = paramsMap
 		}
 	}
-	if len(methodConfig.QueryParamsMap) == 0 && len(methodConfig.QueryParams) > 0 {
-		paramsMap, err := parseParamsString2Map(methodConfig.QueryParams)
+
+	restCommonConfig := methodConfig
+
+	if len(methodConfig.QueryParamsMap) == 0 {
+
+		restParam := make([]string, 4, 8)
+		restParam[0] = restCommonConfig.Path
+		restParam[1] = restCommonConfig.MethodType
+		restParam[2] = restCommonConfig.QueryParams
+		paramsMap, err := parseParamsString2Map(restParam[0])
 		if err != nil {
 			logger.Warnf("[Rest ShutdownConfig] Argument Param parse error:%v", err)
 		} else {
@@ -145,7 +143,7 @@ func transformMethodConfig(methodConfig *config.RestMethodConfig) *config.RestMe
 // for example:
 // string "0:id,1:name" => map [0:id,1:name]
 func parseParamsString2Map(params string) (map[int]string, error) {
-	m := make(map[int]string, 8)
+	m := make(map[int]string)
 	for _, p := range strings.Split(params, ",") {
 		pa := strings.Split(p, ":")
 		key, err := strconv.Atoi(pa[0])

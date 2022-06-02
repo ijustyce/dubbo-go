@@ -18,6 +18,7 @@
 package rest
 
 import (
+	"strconv"
 	"sync"
 	"time"
 )
@@ -27,22 +28,22 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
 	"dubbo.apache.org/dubbo-go/v3/common/extension"
 	"dubbo.apache.org/dubbo-go/v3/common/logger"
+	"dubbo.apache.org/dubbo-go/v3/config"
 	"dubbo.apache.org/dubbo-go/v3/protocol"
 	"dubbo.apache.org/dubbo-go/v3/protocol/rest/client"
-	_ "dubbo.apache.org/dubbo-go/v3/protocol/rest/client/client_impl"
-	rest_config "dubbo.apache.org/dubbo-go/v3/protocol/rest/config"
-	_ "dubbo.apache.org/dubbo-go/v3/protocol/rest/config/reader"
+	"dubbo.apache.org/dubbo-go/v3/protocol/rest/client/client_impl"
 	"dubbo.apache.org/dubbo-go/v3/protocol/rest/server"
-	_ "dubbo.apache.org/dubbo-go/v3/protocol/rest/server/server_impl"
 )
 
 var restProtocol *RestProtocol
 
 const REST = "rest"
 
-// nolint
 func init() {
+	SetRestServer(constant.DefaultRestServer, server.NewGoRestfulServer)
+	extension.SetRestClient(constant.DefaultRestClient, client_impl.NewRestyClient)
 	extension.SetProtocol(REST, GetRestProtocol)
+
 }
 
 // nolint
@@ -69,14 +70,14 @@ func (rp *RestProtocol) Export(invoker protocol.Invoker) protocol.Exporter {
 	serviceKey := url.ServiceKey()
 	exporter := NewRestExporter(serviceKey, invoker, rp.ExporterMap())
 	id := url.GetParam(constant.BeanNameKey, "")
-	restServiceConfig := rest_config.GetRestProviderServiceConfig(id)
+	restServiceConfig := config.GetRestProviderServiceConfig(id)
 	if restServiceConfig == nil {
 		logger.Errorf("%s service doesn't has provider config", url.Path)
 		return nil
 	}
 	rp.SetExporterMap(serviceKey, exporter)
 	restServer := rp.getServer(url, restServiceConfig.Server)
-	for _, methodConfig := range restServiceConfig.RestMethodConfigsMap {
+	for _, methodConfig := range restServiceConfig.RestMethodConfigs {
 		restServer.Deploy(methodConfig, server.GetRouteFunc(invoker, methodConfig))
 	}
 	return exporter
@@ -85,24 +86,26 @@ func (rp *RestProtocol) Export(invoker protocol.Invoker) protocol.Exporter {
 // Refer create rest service reference
 func (rp *RestProtocol) Refer(url *common.URL) protocol.Invoker {
 	// create rest_invoker
-	// todo fix timeout config
 	// start
-	requestTimeout := time.Duration(3 * time.Second)
+	requestTimeout := 3 * time.Second
 	requestTimeoutStr := url.GetParam(constant.TimeoutKey, "3s")
-	connectTimeout := requestTimeout // config.GetConsumerConfig().ConnectTimeout
+	connectTime := config.GetConsumerConfig().ConnectTimeout
 	// end
 	if t, err := time.ParseDuration(requestTimeoutStr); err == nil {
 		requestTimeout = t
 	}
 	id := url.GetParam(constant.BeanNameKey, "")
-	restServiceConfig := rest_config.GetRestConsumerServiceConfig(id)
+	restServiceConfig := config.GetRestConsumerServiceConfig(id)
 	if restServiceConfig == nil {
 		logger.Errorf("%s service doesn't has consumer config", url.Path)
 		return nil
 	}
+	atoi, _ := strconv.Atoi(connectTime)
+	connectTimeout := time.Duration(atoi) * time.Second
+
 	restOptions := client.RestOptions{RequestTimeout: requestTimeout, ConnectTimeout: connectTimeout}
 	restClient := rp.getClient(restOptions, restServiceConfig.Client)
-	invoker := NewRestInvoker(url, &restClient, restServiceConfig.RestMethodConfigsMap)
+	invoker := NewRestInvoker(url, &restClient, restServiceConfig.RestMethodConfigs)
 	rp.SetInvokers(invoker)
 	return invoker
 }
@@ -123,7 +126,7 @@ func (rp *RestProtocol) getServer(url *common.URL, serverType string) server.Res
 	if ok {
 		return restServer
 	}
-	restServer = extension.GetNewRestServer(serverType)
+	restServer = GetNewRestServer(serverType)
 	restServer.Start(url)
 	rp.serverMap[url.Location] = restServer
 	return restServer

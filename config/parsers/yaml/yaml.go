@@ -15,23 +15,30 @@
  * limitations under the License.
  */
 
-package extension
+package yaml
 
 import (
-	"dubbo.apache.org/dubbo-go/v3/protocol/rest/server"
+	"gopkg.in/yaml.v2"
 )
 
-var restServers = make(map[string]func() server.RestServer, 8)
+// YAML implements a YAML parser.
+type YAML struct{}
 
-// SetRestServer sets the RestServer with @name
-func SetRestServer(name string, fun func() server.RestServer) {
-	restServers[name] = fun
+// Parser returns a YAML Parser.
+func Parser() *YAML {
+	return &YAML{}
 }
 
-// GetNewRestServer finds the RestServer with @name
-func GetNewRestServer(name string) server.RestServer {
-	if restServers[name] == nil {
-		panic("restServer for " + name + " is not existing, make sure you have import the package.")
+// Unmarshal parses the given YAML bytes.
+func (p *YAML) Unmarshal(b []byte) (map[string]interface{}, error) {
+	var out map[string]interface{}
+	if err := yaml.Unmarshal(b, &out); err != nil {
+		return nil, err
 	}
-	return restServers[name]()
+	return out, nil
+}
+
+// Marshal marshals the given config map to YAML bytes.
+func (p *YAML) Marshal(o map[string]interface{}) ([]byte, error) {
+	return yaml.Marshal(o)
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package server_impl
+package server
 
 import (
 	"testing"
@@ -27,8 +27,7 @@ import (
 
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
-	"dubbo.apache.org/dubbo-go/v3/protocol/rest/config"
-	"dubbo.apache.org/dubbo-go/v3/protocol/rest/server"
+	"dubbo.apache.org/dubbo-go/v3/config"
 )
 
 func TestGoRestfulServerDeploySameUrl(t *testing.T) {
@@ -42,7 +41,7 @@ func TestGoRestfulServerDeploySameUrl(t *testing.T) {
 		MethodType: "POST",
 		Path:       "/test",
 	}
-	f := func(request server.RestServerRequest, response server.RestServerResponse) {}
+	f := func(request RestServerRequest, response RestServerResponse) {}
 	grs.Deploy(rmc, f)
 	rmc1 := &config.RestMethodConfig{
 		Produces:   "*/*",

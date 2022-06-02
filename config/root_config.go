@@ -64,6 +64,8 @@ type RootConfig struct {
 	CacheFile           string                     `yaml:"cache_file" json:"cache_file,omitempty" property:"cache_file"`
 	Custom              *CustomConfig              `yaml:"custom" json:"custom,omitempty" property:"custom"`
 	Profiles            *ProfilesConfig            `yaml:"profiles" json:"profiles,omitempty" property:"profiles"`
+	RestProvider        *RestProviderConfig        `yaml:"provider" json:"rest-provider" property:"rest-provider"`
+	RestConsumer        *RestConsumerConfig        `yaml:"consumer" json:"rest-consumer" property:"rest-consumer"`
 }
 
 func SetRootConfig(r RootConfig) {
@@ -181,6 +183,15 @@ func (rc *RootConfig) Init() error {
 	if err := initRouterConfig(rc); err != nil {
 		return err
 	}
+
+	// pi rest provider/consumer init
+	if err := rc.RestProvider.Init(rc); err != nil {
+		return err
+	}
+	if err := rc.RestConsumer.Init(rc); err != nil {
+		return err
+	}
+
 	// provider、consumer must last init
 	if err := rc.Provider.Init(rc); err != nil {
 		return err
@@ -202,7 +213,6 @@ func (rc *RootConfig) Start() {
 		gracefulShutdownInit()
 		rc.Consumer.Load()
 		rc.Provider.Load()
-		// todo if register consumer instance or has exported services
 		exportMetadataService()
 		registerServiceInstance()
 	})
@@ -219,10 +229,13 @@ func newEmptyRootConfig() *RootConfig {
 		Tracing:        make(map[string]*TracingConfig),
 		Provider:       NewProviderConfigBuilder().Build(),
 		Consumer:       NewConsumerConfigBuilder().Build(),
-		Metric:         NewMetricConfigBuilder().Build(),
-		Logger:         NewLoggerConfigBuilder().Build(),
-		Custom:         NewCustomConfigBuilder().Build(),
-		Shutdown:       NewShutDownConfigBuilder().Build(),
+		// pi rest provider/consumer builder
+		RestProvider: NewRestProviderConfigBuilder().Build(),
+		RestConsumer: NewRestConsumerConfigBuilder().Build(),
+		Metric:       NewMetricConfigBuilder().Build(),
+		Logger:       NewLoggerConfigBuilder().Build(),
+		Custom:       NewCustomConfigBuilder().Build(),
+		Shutdown:     NewShutDownConfigBuilder().Build(),
 	}
 	return newRootConfig
 }

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package server_impl
+package server
 
 import (
 	"context"
@@ -34,16 +34,9 @@ import (
 
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
-	"dubbo.apache.org/dubbo-go/v3/common/constant"
-	"dubbo.apache.org/dubbo-go/v3/common/extension"
 	"dubbo.apache.org/dubbo-go/v3/common/logger"
-	"dubbo.apache.org/dubbo-go/v3/protocol/rest/config"
-	"dubbo.apache.org/dubbo-go/v3/protocol/rest/server"
+	"dubbo.apache.org/dubbo-go/v3/config"
 )
-
-func init() {
-	extension.SetRestServer(constant.DefaultRestServer, NewGoRestfulServer)
-}
 
 var filterSlice []restful.FilterFunction
 
@@ -54,7 +47,7 @@ type GoRestfulServer struct {
 }
 
 // NewGoRestfulServer a constructor of GoRestfulServer
-func NewGoRestfulServer() server.RestServer {
+func NewGoRestfulServer() RestServer {
 	return &GoRestfulServer{}
 }
 
@@ -87,7 +80,7 @@ func (grs *GoRestfulServer) Start(url *common.URL) {
 
 // Deploy is to Publish a http api in go-restful server
 // The routeFunc should be invoked when the server receive a request
-func (grs *GoRestfulServer) Deploy(restMethodConfig *config.RestMethodConfig, routeFunc func(request server.RestServerRequest, response server.RestServerResponse)) {
+func (grs *GoRestfulServer) Deploy(restMethodConfig *config.RestMethodConfig, routeFunc func(request RestServerRequest, response RestServerResponse)) {
 	rf := func(req *restful.Request, resp *restful.Response) {
 		routeFunc(NewGoRestfulRequestAdapter(req), resp)
 	}
@@ -123,7 +116,7 @@ func AddGoRestfulServerFilter(filterFuc restful.FilterFunction) {
 
 // GoRestfulRequestAdapter a adapter struct about RestServerRequest
 type GoRestfulRequestAdapter struct {
-	server.RestServerRequest
+	RestServerRequest
 	request *restful.Request
 }
 
