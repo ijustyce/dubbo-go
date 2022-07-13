@@ -24,6 +24,10 @@ import (
 )
 
 import (
+	"github.com/dubbogo/gost/log/logger"
+)
+
+import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
 	"dubbo.apache.org/dubbo-go/v3/common/extension"
@@ -38,6 +42,11 @@ import (
 var restProtocol *RestProtocol
 
 const REST = "rest"
+
+//// nolint
+//func init() {
+//	extension.SetProtocol(REST, GetRestProtocol)
+//}
 
 func init() {
 	SetRestServer(constant.DefaultRestServer, server.NewGoRestfulServer)

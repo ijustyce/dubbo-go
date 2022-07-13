@@ -27,6 +27,8 @@ import (
 )
 
 import (
+	"github.com/dubbogo/gost/log/logger"
+
 	"github.com/emicklei/go-restful/v3"
 
 	perrors "github.com/pkg/errors"
@@ -38,6 +40,10 @@ import (
 	"dubbo.apache.org/dubbo-go/v3/config"
 )
 
+//func init() {
+//	extension.SetRestServer(constant.DefaultRestServer, NewGoRestfulServer)
+//}
+
 var filterSlice []restful.FilterFunction
 
 // GoRestfulServer a rest server implement by go-restful
@@ -45,6 +51,11 @@ type GoRestfulServer struct {
 	srv *http.Server
 	ws  *restful.WebService
 }
+
+//// NewGoRestfulServer a constructor of GoRestfulServer
+//func NewGoRestfulServer() server.RestServer {
+//	return &GoRestfulServer{}
+//}
 
 // NewGoRestfulServer a constructor of GoRestfulServer
 func NewGoRestfulServer() RestServer {

@@ -27,7 +27,7 @@ import (
 )
 
 import (
-	"dubbo.apache.org/dubbo-go/v3/common/file"
+	"dubbo.apache.org/dubbo-go/v3/common/constant/file"
 	"dubbo.apache.org/dubbo-go/v3/config/parsers/properties"
 	"dubbo.apache.org/dubbo-go/v3/config/parsers/yaml"
 )
