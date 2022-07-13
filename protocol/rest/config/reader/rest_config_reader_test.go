@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -29,17 +28,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-import (
-	"dubbo.apache.org/dubbo-go/v3/protocol/rest/config"
-)
-
 func TestRestConfigReaderReadConsumerConfig(t *testing.T) {
 	bs, err := yaml.LoadYMLConfig("./testdata/consumer_config.yml")
 	assert.NoError(t, err)
 	configReader := NewRestConfigReader()
 	err = configReader.ReadConsumerConfig(bytes.NewBuffer(bs))
 	assert.NoError(t, err)
-	assert.NotEmpty(t, config.GetRestConsumerServiceConfigMap())
 }
 
 func TestRestConfigReaderReadProviderConfig(t *testing.T) {
@@ -48,5 +42,4 @@ func TestRestConfigReaderReadProviderConfig(t *testing.T) {
 	configReader := NewRestConfigReader()
 	err = configReader.ReadProviderConfig(bytes.NewBuffer(bs))
 	assert.NoError(t, err)
-	assert.NotEmpty(t, config.GetRestProviderServiceConfigMap())
 }

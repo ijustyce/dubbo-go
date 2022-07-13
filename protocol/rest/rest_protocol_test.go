@@ -33,7 +33,6 @@ import (
 import (
 	"dubbo.apache.org/dubbo-go/v3/common"
 	"dubbo.apache.org/dubbo-go/v3/common/extension"
-	_ "dubbo.apache.org/dubbo-go/v3/common/proxy/proxy_factory"
 	rest_config "dubbo.apache.org/dubbo-go/v3/config"
 )
 

@@ -18,6 +18,7 @@
 package config
 
 import (
+	"github.com/dubbogo/gost/log/logger"
 	"strconv"
 	"strings"
 )
@@ -28,7 +29,6 @@ import (
 
 import (
 	"dubbo.apache.org/dubbo-go/v3/common/constant"
-	"dubbo.apache.org/dubbo-go/v3/common/logger"
 	common "dubbo.apache.org/dubbo-go/v3/protocol/rest/config"
 )
 
